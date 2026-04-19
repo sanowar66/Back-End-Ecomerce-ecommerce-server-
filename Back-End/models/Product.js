@@ -4,32 +4,30 @@ const productSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        trim: true,
+        trim: true
     },
     desc: {
         type: String,
         required: true,
-        trim: true,
+        trim: true
     },
     madeIn: {
         type: String,
         required: true,
-        trim: true,
+        trim: true
     },
     price: {
         type: Number,
-        required: true,
-        min: 0,
+        required: true
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+        ref: 'User'
     },
     fileId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'File',
+        ref: 'File'
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = Product = mongoose.model('Product', productSchema);
