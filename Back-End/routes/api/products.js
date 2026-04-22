@@ -64,5 +64,35 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
+//get one product
+router.get("/:id",authenticateToken,async (req,res)=>{
+  try{
+     const id=req.params.id
+     const product=await Product.findById(id).populate(["fileId","userId"]).exec();
+     if(product){
+     res.json(product)
+    }else{
+     res.status(404).json({message:"Product Not Found."})
+      }
+  }catch{
+    res.status(500).json({message:"Something went worng"})
+  }
+})
+//delete a product
+router.delete("/:id",authenticateToken,async (req,res)=>{
+  if (req.user.role != "admin") {
+      return res.status(400).json({ message: "You are not an admin" });
+    }else{
+      const id=req.params.id
+      const product=await Product.findById(id)
+      if(product){
+        await Product.findByIdAndDelete(product);
+        res.status(200).json({message:"Delete Product Succesfully!"})
+      }
+    }
+  
+  
+})
+
 
 module.exports = router;

@@ -44,6 +44,7 @@ router.post("/login", async(req, res) => {
     }
 });
 
+
 module.exports = router;
 
 function handleRefreshTokenLogin(refreshToken, res) {
@@ -83,11 +84,11 @@ async function handleEmailLogin(email, res, password) {
 }
 
 function getUserTokens(user, res) {
-    const accessToken = jwt.sign({ email: user.email, id: user._id, type: user.type },
-        process.env.JWT_SECRET, { expiresIn: "1d" }
+    const accessToken = jwt.sign({ email: user.email, id: user._id,role: user.role},
+        process.env.JWT_SECRET, { expiresIn: "2d" }
     );
-    const refreshToken = jwt.sign({ email: user.email, id: user._id, type: user.type },
-        process.env.JWT_SECRET, { expiresIn: "3d" }
+    const refreshToken = jwt.sign({ email: user.email, id: user._id,role: user.role},
+        process.env.JWT_SECRET, { expiresIn: "7d" }
     );
     const userObj = user.toJSON();
     userObj['accessToken'] = accessToken;
