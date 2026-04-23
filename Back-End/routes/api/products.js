@@ -21,7 +21,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 
 //upload a file
-router.post("/uploads", upload.single("file"), async(req, res) => {
+router.post("/uploads",[authenticateToken, upload.single("file")], async(req, res) => {
+  if(req.user.role !="admin"){
+    return res.status(400).json({ message: "You are not an admin" });
+  }else{
     const productObj = {
         name: req.file.filename,
         path: req.file.path
@@ -30,6 +33,7 @@ router.post("/uploads", upload.single("file"), async(req, res) => {
     await file.save()
     res.status(201).json(file)
     console.log("file Uploaded")
+  }
 })
 
 
@@ -63,6 +67,7 @@ router.post("/", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Something went wrong." });
   }
 });
+//get all product
 
 //get one product
 router.get("/:id",authenticateToken,async (req,res)=>{
@@ -93,6 +98,26 @@ router.delete("/:id",authenticateToken,async (req,res)=>{
   
   
 })
+
+//product Updated
+router.put("/:id",authenticateToken, async (req,res)=>{
+  try{
+ if (req.user.role != "admin") {
+      return res.status(400).json({ message: "You are not an admin" });
+    }else{
+      const id=req.params.id;
+      const body=req.body;
+      const product=await Product.findByIdAndUpdate(id,body, {new:true});
+      if(product){
+        res.status(200).json(product)
+      }else{
+         res.status(400).json({ message: "Product Not Found." });
+      }
+    }
+  }catch{es.status(500).json({message:"Something went worng"})}
+
+})
+
 
 
 module.exports = router;
