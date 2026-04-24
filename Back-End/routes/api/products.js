@@ -8,6 +8,7 @@ const multer = require('multer');
 const Product = require('../../models/Product')
 const File = require('../../models/File')
 const User = require('../../models/User')
+const auth = require('../../middleware/auth')
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -67,8 +68,6 @@ router.post("/", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Something went wrong." });
   }
 });
-//get all product
-
 //get one product
 router.get("/:id",authenticateToken,async (req,res)=>{
   try{
@@ -83,6 +82,57 @@ router.get("/:id",authenticateToken,async (req,res)=>{
     res.status(500).json({message:"Something went worng"})
   }
 })
+
+//get all product
+router.get("/",authenticateToken,async (req,res)=>{
+   try{
+    let current=req?.query?.current ?? "1"
+    current=parseInt(current);
+    let pageSize=req?.query?.pageSize ?? "10"
+    pageSize=parseInt(pageSize)
+
+    const aggregate = [];
+
+    aggregate.push(
+     {
+         $match: {}
+    },
+    {
+         $sort: {
+            createdAt: -1
+           }
+     },
+     {
+        $skip: (current - 1) * pageSize
+     },
+     {
+    $limit: Number(pageSize)
+      },
+     {
+      $lookup: {
+        from: "files",
+        localField: "fileId",
+        foreignField: "_id",
+        as: "file",
+      }},
+      {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "vendor",
+      }
+    }
+)
+ 
+    const products = await Product.aggregate(aggregate);
+    res.json(products);
+   } catch{
+    res.status(500).json({ message: "Something went wrong." });
+   }
+
+
+});
 //delete a product
 router.delete("/:id",authenticateToken,async (req,res)=>{
   if (req.user.role != "admin") {
