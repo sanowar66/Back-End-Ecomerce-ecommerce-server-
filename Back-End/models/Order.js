@@ -19,7 +19,7 @@ const orderSchema = new mongoose.Schema({
     total: {
         type: Number,
         required: true,
-        min: 0,
+        min: 1,
     },
     purchaseDate: {
         type: Date,
@@ -35,7 +35,7 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+        enum: ['in-progress', 'shipped', 'delivered', 'cancelled'],
         default: 'pending',
     },
 }, { timestamps: true });

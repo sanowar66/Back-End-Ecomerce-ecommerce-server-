@@ -4,39 +4,84 @@ const Product = require("../../models/Product");
 const Order = require("../../models/Order");
 const authenticateToken = require("../../middleware/auth");
 const { body, validationResult } = require("express-validator");
-/* 
+
 //* Create a order
 router.post("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const productId = req.body.productId;
+    const qty = req.body.qty ?? 1;
 
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(400).json({ message: "Product not found" });
+    if (!productId) {
+      return res.status(500).json({ message: "Product ID required" });
     } else {
-      const orderObj = {
-        userId: userId,
+      const product = await Product.findById(productId);
+
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + 2);
+
+      const order = new Order({
         productId: productId,
-        qty: req.body.qty ?? 1,
+        userId: userId,
+        qty: qty,
+        total: product.price * qty,
         purchaseDate: new Date(),
-        expectedDeliveryDate: new Date(),
+        location: req.body.location,
+        deliveryDate: deliveryDate,
         status: "in-progress",
-        location: req.body.location ?? "",
-      };
+      });
 
-      orderObj.total = product.price * orderObj.qty;
-
-      const order = new Order(orderObj);
       await order.save();
       res.status(201).json(order);
     }
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Something went wrong" });
   }
 });
 
-//* Get all orders by user
+//order status Change
+router.put(
+  "/:id",
+  [
+    authenticateToken,
+    [
+      body("status")
+        .notEmpty()
+        .withMessage("status is required")
+        .isIn(["in-progress", "delivered", "shipped", "cancelled"])
+        .withMessage("Status invalid"),
+    ],
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      if (req.user.role != "admin") {
+        return res.status(400).json({ message: "You are not an admin" });
+      } else {
+        const id = req.params.id;
+        const status = req.body.status;
+        const order = await Order.findByIdAndUpdate(
+          id,
+          { status: status },
+          { new: true },
+        );
+        if (order) {
+          res.status(200).json(order);
+        } else {
+          res.status(400).json({ message: "Product Not Found." });
+        }
+      }
+    } catch {
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  },
+);
+
+
+// Get all orders by user
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -47,41 +92,8 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-//* Change order status
-router.put(
-  "/status/:id",
-  [
-    authenticateToken,
-    [
-      body("status", "status is required").notEmpty(),
-      body("status", "give a valid status").isIn(["in-progress", "delivered"]),
-    ],
-  ],
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-      const id = req.params.id;
-      const status = req.body.status;
-      const order = await Order.findByIdAndUpdate(
-        id,
-        { status: status },
-        { new: true }
-      );
-      if (!order) {
-        return res.status(400).json({ message: "Order not found" });
-      } else {
-        res.json(order);
-      }
-    } catch (error) {
-      res.status(500).json({ message: "Something went wrong" });
-    }
-  }
-);
 
-//* Get one order
+// Get one order
 router.get("/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
@@ -97,20 +109,20 @@ router.get("/:id", authenticateToken, async (req, res) => {
   }
 });
 
-//* Delete One Order
+//Delete One Order
 router.delete("/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
     const userId = req.user.id;
     const order = await Order.findOneAndDelete({ _id: id, userId: userId });
     if (order) {
-      res.json({message:"Deleted" });
+      res.json({message:"Delete Order Successfully" });
     } else {
       return res.status(400).json({ message: "Order not found" });
     }
   } catch (error) {
     res.status(500).json({ message: "Something went wrong" });
   }
-}); */
+}); 
 
 module.exports = router;
