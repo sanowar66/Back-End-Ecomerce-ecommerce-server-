@@ -44,6 +44,69 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// get user profile
+router.get("/profile", authenticateToken, async (req, res) => {
+  try {
+    const id = req.user.id;
+    const user = await User.findById(id);
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: "User Not Found." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong." });
+  }
+});
+
+// get all users
+router.get("/", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role != "admin") {
+      return res.status(400).json({ message: "You are not an admin" });
+    } else {
+      const users = await User.find({});
+      res.json(users);
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong." });
+  }
+});
+
+//* Update One User
+router.put("/:id", authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const userBody = req.body;
+    const newUser = await User.findByIdAndUpdate(id, userBody, { new: true });
+    if (newUser) {
+      res.json(newUser);
+    } else {
+      res.status(404).json({ message: "User not found." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong." });
+  }
+});
+//* Delete a user
+router.delete("/:id", authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (req.user.role != "admin") {
+      return res.status(400).json({ message: "You are not an admin" });
+    } else {
+      const deletedUser = await User.findByIdAndDelete(id);
+      if (deletedUser) {
+        res.json({ message: "The user is deleted" });
+      } else {
+        res.status(404).json({ message: "User not found." });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong." });
+  }
+});
+
 module.exports = router;
 
 function handleRefreshTokenLogin(refreshToken, res) {
